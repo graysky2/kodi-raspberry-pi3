@@ -1,6 +1,6 @@
-# kodi-raspberrypi3
+# Kodi Raspberry-Pi3
 ## Background
-This patch enables Kodi optimizations specific for the Cortex-A53 processor in the Raspberry Pi 3. Tested and verified on a Raspberry Pi 3 running Arch ARMv7 (armv7h).
+Patch to enable Kodi optimizations specific for the Cortex-A53 processor in the Raspberry Pi 3. Tested and verified on a Raspberry Pi 3 running Arch ARMv7 (armv7h).
 
 ## Instructions
 In addition to patching the upstream source with this patch, you will need to build with modified CFLAGS and with a few extra lines in the cmake step.
