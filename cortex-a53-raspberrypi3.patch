@@ -1,59 +1,66 @@
-BACKGROUND
-This patch enables Kodi optimizations specific for the Cortex-A53 processor in
-the Raspberry Pi 3. Tested and verified on a Raspberry Pi 3 running Arch ARMv7
-(armv7h).
+From b3c52f02f897ea789a8c3ddcf5f9581c5ed588b2 Mon Sep 17 00:00:00 2001
+From: graysky <graysky@archlinux.us>
+Date: Sun, 11 Mar 2018 09:23:59 -0400
+Subject: [PATCH] add support for RPi3
 
-REQUIREMENTS
-Kodi Kryption 17.6
-GCC 7.2.1 and 7.3.0
+---
+ configure.ac                               | 5 +++++
+ project/cmake/scripts/rbpi/ArchSetup.cmake | 6 +++++-
+ tools/depends/configure.ac                 | 8 ++++++++
+ 3 files changed, 18 insertions(+), 1 deletion(-)
 
-Note that other versions may work but are unsupported.
-
-INSTRUCTIONS
-In addition to patching the upstream source with this patch, you will need to
-build with modified C*FLAGS and with a few extra lines in the cmake step.
-
-Append the following two lines to augment your distro defaults:
- CFLAGS+=" -march=armv8-a+crc -mcpu=cortex-a53 -mfpu=neon-fp-armv8"
- CXXFLAGS="${CFLAGS}"
-
-In the cmake step, ensure you add the following:
- -DCORE_SYSTEM_NAME=rbpi -DWITH_CPU=cortex-a53
-
---- a/tools/depends/configure.ac	2017-11-14 16:55:01.000000000 +0000
-+++ b/tools/depends/configure.ac	2018-03-10 19:49:31.109082929 +0000
-@@ -403,9 +403,9 @@ case $use_platform in
-   raspberry-pi2)
-      target_platform=raspberry-pi
+diff --git a/configure.ac b/configure.ac
+index 71e942b1c323..7bb40d53c16f 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -681,6 +681,11 @@ case $use_platform in
       use_neon=yes
--     use_cpu=cortex-a7
--     platform_cflags="-fPIC -mcpu=cortex-a7 -mfloat-abi=hard -mfpu=neon-vfpv4"
--     platform_cxxflags="-fPIC -mcpu=cortex-a7 -mfloat-abi=hard -mfpu=neon-vfpv4"
-+     use_cpu=cortex-a53
-+     platform_cflags="-fPIC -mcpu=cortex-a53 -mfloat-abi=hard -mfpu=neon-fp-armv8"
-+     platform_cxxflags="-fPIC -mcpu=cortex-a53 -mfloat-abi=hard -mfpu=neon-fp-armv8"
-      platform_ldflags="-lpthread"
+      use_cpu=cortex-a7
       ;;
++  raspberry-pi3)
++     target_platform=target_raspberry_pi
++     use_neon=yes
++     use_cpu=cortex-a53
++     ;;
  esac
---- a/project/cmake/scripts/rbpi/ArchSetup.cmake	2017-11-14 11:55:01.000000000 -0500
-+++ b/project/cmake/scripts/rbpi/ArchSetup.cmake	2018-03-10 14:54:20.056951803 -0500
-@@ -17,7 +17,7 @@ else()
-   elseif(CPU MATCHES "cortex-a7" OR CPU MATCHES "cortex-a53")
+ 
+ if test "$target_platform" = "target_raspberry_pi" ; then
+diff --git a/project/cmake/scripts/rbpi/ArchSetup.cmake b/project/cmake/scripts/rbpi/ArchSetup.cmake
+index f57e69d45272..69e6bc123f95 100644
+--- a/project/cmake/scripts/rbpi/ArchSetup.cmake
++++ b/project/cmake/scripts/rbpi/ArchSetup.cmake
+@@ -14,10 +14,14 @@ else()
+     set(ARCH arm)
+     set(NEON False)
+     set(NEON_FLAGS "-mcpu=arm1176jzf-s -mtune=arm1176jzf-s -mfloat-abi=hard -mfpu=vfp")
+-  elseif(CPU MATCHES "cortex-a7" OR CPU MATCHES "cortex-a53")
++  elseif(CPU MATCHES "cortex-a7")
      set(ARCH arm)
      set(NEON True)
--    set(NEON_FLAGS "-fPIC -mcpu=cortex-a7 -mfloat-abi=hard -mfpu=neon-vfpv4 -mvectorize-with-neon-quad")
+     set(NEON_FLAGS "-fPIC -mcpu=cortex-a7 -mfloat-abi=hard -mfpu=neon-vfpv4 -mvectorize-with-neon-quad")
++  elseif(CPU MATCHES "cortex-a53")
++    set(ARCH arm)
++    set(NEON True)
 +    set(NEON_FLAGS "-fPIC -mcpu=cortex-a53 -mfloat-abi=hard -mfpu=neon-fp-armv8 -mvectorize-with-neon-quad")
    else()
      message(SEND_ERROR "Unknown CPU: ${CPU}")
    endif()
---- a/configure.ac	2017-11-14 11:55:01.000000000 -0500
-+++ b/configure.ac	2018-03-10 18:39:56.590285970 -0500
-@@ -679,7 +679,7 @@ case $use_platform in
-   raspberry-pi2)
-      target_platform=target_raspberry_pi
-      use_neon=yes
--     use_cpu=cortex-a7
-+     use_cpu=cortex-a53
+diff --git a/tools/depends/configure.ac b/tools/depends/configure.ac
+index 3626ea5204eb..cd4b495a7183 100644
+--- a/tools/depends/configure.ac
++++ b/tools/depends/configure.ac
+@@ -408,6 +408,14 @@ case $use_platform in
+      platform_cxxflags="-fPIC -mcpu=cortex-a7 -mfloat-abi=hard -mfpu=neon-vfpv4"
+      platform_ldflags="-lpthread"
       ;;
++  raspberry-pi3)
++     target_platform=raspberry-pi
++     use_neon=yes
++     use_cpu=cortex-a53
++     platform_cflags="-fPIC -mcpu=cortex-a53 -mfloat-abi=hard -mfpu=neon-fp-armv8"
++     platform_cxxflags="-fPIC -mcpu=cortex-a53 -mfloat-abi=hard -mfpu=neon-fp-armv8"
++     platform_ldflags="-lpthread"
++     ;;
  esac
-
+ 
+ if test "$target_platform" = "raspberry-pi" ; then
