@@ -1,0 +1,59 @@
+BACKGROUND
+This patch enables Kodi optimizations specific for the Cortex-A53 processor in
+the Raspberry Pi 3. Tested and verified on a Raspberry Pi 3 running Arch ARMv7
+(armv7h).
+
+REQUIREMENTS
+Kodi Kryption 17.6
+GCC 7.2.1 and 7.3.0
+
+Note that other versions may work but are unsupported.
+
+INSTRUCTIONS
+In addition to patching the upstream source with this patch, you will need to
+build with modified C*FLAGS and with a few extra lines in the cmake step.
+
+Append the following two lines to augment your distro defaults:
+ CFLAGS+=" -march=armv8-a+crc -mcpu=cortex-a53 -mfpu=neon-fp-armv8"
+ CXXFLAGS="${CFLAGS}"
+
+In the cmake step, ensure you add the following:
+ -DCORE_SYSTEM_NAME=rbpi -DWITH_CPU=cortex-a53
+
+--- a/tools/depends/configure.ac	2017-11-14 16:55:01.000000000 +0000
++++ b/tools/depends/configure.ac	2018-03-10 19:49:31.109082929 +0000
+@@ -403,9 +403,9 @@ case $use_platform in
+   raspberry-pi2)
+      target_platform=raspberry-pi
+      use_neon=yes
+-     use_cpu=cortex-a7
+-     platform_cflags="-fPIC -mcpu=cortex-a7 -mfloat-abi=hard -mfpu=neon-vfpv4"
+-     platform_cxxflags="-fPIC -mcpu=cortex-a7 -mfloat-abi=hard -mfpu=neon-vfpv4"
++     use_cpu=cortex-a53
++     platform_cflags="-fPIC -mcpu=cortex-a53 -mfloat-abi=hard -mfpu=neon-fp-armv8"
++     platform_cxxflags="-fPIC -mcpu=cortex-a53 -mfloat-abi=hard -mfpu=neon-fp-armv8"
+      platform_ldflags="-lpthread"
+      ;;
+ esac
+--- a/project/cmake/scripts/rbpi/ArchSetup.cmake	2017-11-14 11:55:01.000000000 -0500
++++ b/project/cmake/scripts/rbpi/ArchSetup.cmake	2018-03-10 14:54:20.056951803 -0500
+@@ -17,7 +17,7 @@ else()
+   elseif(CPU MATCHES "cortex-a7" OR CPU MATCHES "cortex-a53")
+     set(ARCH arm)
+     set(NEON True)
+-    set(NEON_FLAGS "-fPIC -mcpu=cortex-a7 -mfloat-abi=hard -mfpu=neon-vfpv4 -mvectorize-with-neon-quad")
++    set(NEON_FLAGS "-fPIC -mcpu=cortex-a53 -mfloat-abi=hard -mfpu=neon-fp-armv8 -mvectorize-with-neon-quad")
+   else()
+     message(SEND_ERROR "Unknown CPU: ${CPU}")
+   endif()
+--- a/configure.ac	2017-11-14 11:55:01.000000000 -0500
++++ b/configure.ac	2018-03-10 18:39:56.590285970 -0500
+@@ -679,7 +679,7 @@ case $use_platform in
+   raspberry-pi2)
+      target_platform=target_raspberry_pi
+      use_neon=yes
+-     use_cpu=cortex-a7
++     use_cpu=cortex-a53
+      ;;
+ esac
+
