@@ -1,0 +1,83 @@
+From ba5f0f65622e53a907d6e009a14a2db83ca27991 Mon Sep 17 00:00:00 2001
+From: graysky <graysky@archlinux.us>
+Date: Sun, 11 Mar 2018 12:21:53 -0400
+Subject: [PATCH] add support for RPi3
+
+---
+ cmake/scripts/linux/ArchSetup.cmake | 25 +++++++++++++++++++------
+ tools/depends/configure.ac          | 12 ++++++++++--
+ 2 files changed, 29 insertions(+), 8 deletions(-)
+
+diff --git a/cmake/scripts/linux/ArchSetup.cmake b/cmake/scripts/linux/ArchSetup.cmake
+index 0632ca61171b..eb9c4fb656d5 100644
+--- a/cmake/scripts/linux/ArchSetup.cmake
++++ b/cmake/scripts/linux/ArchSetup.cmake
+@@ -1,8 +1,4 @@
+ set(ARCH_DEFINES -D_LINUX -DTARGET_POSIX -DTARGET_LINUX)
+-# temp until further cleanup is done
+-if(CORE_PLATFORM_NAME_LC STREQUAL rbpi)
+-  list(APPEND ARCH_DEFINES -D_ARMEL -DTARGET_RASPBERRY_PI)
+-endif()
+ set(SYSTEM_DEFINES -D__STDC_CONSTANT_MACROS -D_FILE_DEFINED
+                    -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64)
+ set(PLATFORM_DIR platform/linux)
+@@ -21,10 +17,14 @@ else()
+     set(ARCH arm)
+     set(NEON False)
+     set(NEON_FLAGS "-mcpu=arm1176jzf-s -mtune=arm1176jzf-s -mfloat-abi=hard -mfpu=vfp")
+-  elseif(CPU MATCHES "cortex-a7" OR CPU MATCHES "cortex-a53")
++  elseif(CPU MATCHES "cortex-a7")
+     set(ARCH arm)
+     set(NEON True)
+-    set(NEON_FLAGS "-fPIC -mcpu=cortex-a7 -mfloat-abi=hard -mfpu=neon-vfpv4 -mvectorize-with-neon-quad")
++    set(NEON_FLAGS "-fPIC -mcpu=cortex-a7")
++  elseif(CPU MATCHES "cortex-a53")
++    set(ARCH arm)
++    set(NEON True)
++    set(NEON_FLAGS "-fPIC -mcpu=cortex-a53")
+   elseif(CPU MATCHES arm)
+     set(ARCH arm)
+     set(NEON True)
+@@ -36,6 +36,19 @@ else()
+   endif()
+ endif()
+ 
++# temp until further cleanup is done
++# add Raspberry Pi 2 and 3 specific flags
++if(CORE_PLATFORM_NAME_LC STREQUAL rbpi)
++  list(APPEND ARCH_DEFINES -D_ARMEL -DTARGET_RASPBERRY_PI)
++  if(CPU MATCHES "cortex-a7")
++    set(NEON_FLAGS "-fPIC -mcpu=cortex-a7 -mfloat-abi=hard -mfpu=neon-vfpv4 -mvectorize-with-neon-quad")
++  elseif(CPU MATCHES "cortex-a53")
++    set(NEON_FLAGS "-fPIC -mcpu=cortex-a53 -mfloat-abi=hard -mfpu=neon-fp-armv8 -mvectorize-with-neon-quad")
++  else()
++    message(SEND_ERROR "Unknown CPU: ${CPU}")
++  endif()
++endif()
++
+ if((CMAKE_BUILD_TYPE STREQUAL Release OR CMAKE_BUILD_TYPE STREQUAL MinSizeRel)
+     AND CMAKE_COMPILER_IS_GNUCXX)
+   # Make sure we strip binaries in Release build
+diff --git a/tools/depends/configure.ac b/tools/depends/configure.ac
+index 266326143439..186da4e47661 100644
+--- a/tools/depends/configure.ac
++++ b/tools/depends/configure.ac
+@@ -429,8 +429,16 @@ case $use_platform in
+      target_platform=raspberry-pi
+      use_cpu=cortex-a7
+      ffmpeg_options_default="--cpu=cortex-a7"
+-     platform_cflags="-fPIC -mcpu=cortex-a7 -mfloat-abi=hard -mfpu=neon-vfpv4"
+-     platform_cxxflags="-fPIC -mcpu=cortex-a7 -mfloat-abi=hard -mfpu=neon-vfpv4"
++     platform_cflags="-fPIC -mcpu=cortex-a7 -mfloat-abi=hard -mfpu=neon-vfpv4 -mvectorize-with-neon-quad"
++     platform_cxxflags="-fPIC -mcpu=cortex-a7 -mfloat-abi=hard -mfpu=neon-vfpv4 -mvectorize-with-neon-quad"
++     platform_ldflags="-lpthread"
++     ;;
++  raspberry-pi3)
++     target_platform=raspberry-pi
++     use_cpu=cortex-a53
++     ffmpeg_options_default="--cpu=cortex-a53"
++     platform_cflags="-fPIC -mcpu=cortex-a53 -mfloat-abi=hard -mfpu=neon-fp-armv8 -mvectorize-with-neon-quad"
++     platform_cxxflags="-fPIC -mcpu=cortex-a53 -mfloat-abi=hard -mfpu=neon-fp-armv8 -mvectorize-with-neon-quad"
+      platform_ldflags="-lpthread"
+      ;;
+   auto)
