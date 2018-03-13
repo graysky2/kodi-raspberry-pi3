@@ -1,27 +1,18 @@
-From ba5f0f65622e53a907d6e009a14a2db83ca27991 Mon Sep 17 00:00:00 2001
+From b41f8c2ab820cc1ca06a95c20631f8abc2b5cc78 Mon Sep 17 00:00:00 2001
 From: graysky <graysky@archlinux.us>
 Date: Sun, 11 Mar 2018 12:21:53 -0400
 Subject: [PATCH] add support for RPi3
 
 ---
- cmake/scripts/linux/ArchSetup.cmake | 25 +++++++++++++++++++------
+ cmake/scripts/linux/ArchSetup.cmake | 19 +++++++++++++++++--
  tools/depends/configure.ac          | 12 ++++++++++--
- 2 files changed, 29 insertions(+), 8 deletions(-)
+ 2 files changed, 27 insertions(+), 4 deletions(-)
 
 diff --git a/cmake/scripts/linux/ArchSetup.cmake b/cmake/scripts/linux/ArchSetup.cmake
-index 0632ca61171b..eb9c4fb656d5 100644
+index 45b1da709b76..64a758e18f8f 100644
 --- a/cmake/scripts/linux/ArchSetup.cmake
 +++ b/cmake/scripts/linux/ArchSetup.cmake
-@@ -1,8 +1,4 @@
- set(ARCH_DEFINES -D_LINUX -DTARGET_POSIX -DTARGET_LINUX)
--# temp until further cleanup is done
--if(CORE_PLATFORM_NAME_LC STREQUAL rbpi)
--  list(APPEND ARCH_DEFINES -D_ARMEL -DTARGET_RASPBERRY_PI)
--endif()
- set(SYSTEM_DEFINES -D__STDC_CONSTANT_MACROS -D_FILE_DEFINED
-                    -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64)
- set(PLATFORM_DIR platform/linux)
-@@ -21,10 +17,14 @@ else()
+@@ -22,10 +22,14 @@ else()
      set(ARCH arm)
      set(NEON False)
      set(NEON_FLAGS "-mcpu=arm1176jzf-s -mtune=arm1176jzf-s -mfloat-abi=hard -mfpu=vfp")
@@ -38,7 +29,7 @@ index 0632ca61171b..eb9c4fb656d5 100644
    elseif(CPU MATCHES arm)
      set(ARCH arm)
      set(NEON True)
-@@ -36,6 +36,19 @@ else()
+@@ -37,6 +41,17 @@ else()
    endif()
  endif()
  
@@ -50,8 +41,6 @@ index 0632ca61171b..eb9c4fb656d5 100644
 +    set(NEON_FLAGS "-fPIC -mcpu=cortex-a7 -mfloat-abi=hard -mfpu=neon-vfpv4 -mvectorize-with-neon-quad")
 +  elseif(CPU MATCHES "cortex-a53")
 +    set(NEON_FLAGS "-fPIC -mcpu=cortex-a53 -mfloat-abi=hard -mfpu=neon-fp-armv8 -mvectorize-with-neon-quad")
-+  else()
-+    message(SEND_ERROR "Unknown CPU: ${CPU}")
 +  endif()
 +endif()
 +
